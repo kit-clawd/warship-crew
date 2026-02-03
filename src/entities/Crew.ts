@@ -21,7 +21,7 @@ export class Crew extends Phaser.GameObjects.Container {
     this.health = CREW_CONFIG.baseHealth;
     this.morale = CREW_CONFIG.baseMorale;
     
-    // Create crew visual (simple oval for now)
+    // Create crew visual (clean ellipse)
     this.sprite = scene.add.ellipse(0, 0, CREW_CONFIG.size, CREW_CONFIG.size * 1.3, COLORS.crew);
     this.sprite.setStrokeStyle(2, 0x000000);
     this.add(this.sprite);
@@ -76,7 +76,7 @@ export class Crew extends Phaser.GameObjects.Container {
   
   setSelected(selected: boolean): void {
     this.isSelected = selected;
-    this.sprite.setFillStyle(selected ? COLORS.crewSelected : 
+    this.sprite.setFillStyle(selected ? COLORS.crewSelected :
       (this.health < 50 ? COLORS.crewInjured : COLORS.crew));
     this.sprite.setStrokeStyle(selected ? 3 : 2, selected ? 0xffffff : 0x000000);
   }
@@ -89,18 +89,18 @@ export class Crew extends Phaser.GameObjects.Container {
   takeDamage(amount: number): void {
     this.health = Math.max(0, this.health - amount);
     this.updateHealthBar();
-    
+
     if (this.health <= 0) {
       this.die();
-    } else if (this.health < 50) {
+    } else if (this.health < 50 && !this.isSelected) {
       this.sprite.setFillStyle(COLORS.crewInjured);
     }
   }
-  
+
   heal(amount: number): void {
     this.health = Math.min(CREW_CONFIG.baseHealth, this.health + amount);
     this.updateHealthBar();
-    
+
     if (this.health >= 50 && !this.isSelected) {
       this.sprite.setFillStyle(COLORS.crew);
     }

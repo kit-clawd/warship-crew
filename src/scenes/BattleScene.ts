@@ -31,8 +31,14 @@ export class BattleScene extends Phaser.Scene {
   private battleStarted: boolean = false;
   private gameOver: boolean = false;
   
+  private helpOverlay!: Phaser.GameObjects.Container;
+
   constructor() {
     super({ key: 'BattleScene' });
+  }
+  
+  preload(): void {
+    // No external assets needed - using clean vector graphics
   }
   
   create(): void {
@@ -47,6 +53,9 @@ export class BattleScene extends Phaser.Scene {
     
     // Create UI
     this.createUI();
+    
+    // Create help overlay
+    this.createHelpOverlay();
     
     // Set up event listeners
     this.setupEvents();
@@ -100,6 +109,16 @@ export class BattleScene extends Phaser.Scene {
       g.strokePath();
     }
     
+    // Draw deck lines
+    g.lineStyle(2, COLORS.hullDark);
+    for (let i = 1; i < decks; i++) {
+      const y = shipY + i * deckHeight;
+      g.beginPath();
+      g.moveTo(shipX + 10, y);
+      g.lineTo(shipX + width - 10, y);
+      g.strokePath();
+    }
+    
     // Draw deck floors
     g.fillStyle(COLORS.deck, 1);
     for (let i = 0; i < decks - 1; i++) {
@@ -111,14 +130,14 @@ export class BattleScene extends Phaser.Scene {
     g.fillStyle(0x222222, 1);
     for (let deck = 1; deck <= 3; deck++) {
       const y = shipY + deck * deckHeight + 40;
-      const numPorts = 8 - deck; // Fewer ports on lower decks
+      const numPorts = 8 - deck;
       const spacing = (width - 100) / numPorts;
       for (let i = 0; i < numPorts; i++) {
         const x = shipX + 60 + i * spacing;
         g.fillRect(x, y, 20, 15);
       }
     }
-    
+
     // Ship name
     this.add.text(shipX + width / 2, shipY - 20, 'HMS INDOMITABLE', {
       fontSize: '24px',
@@ -187,6 +206,76 @@ export class BattleScene extends Phaser.Scene {
       
       const crew = new Crew(this, x, y);
       this.crew.push(crew);
+    }
+  }
+  
+  private createHelpOverlay(): void {
+    const overlay = this.add.container(640, 360);
+    overlay.setDepth(400);
+    
+    // Semi-transparent background
+    const bg = this.add.rectangle(0, 0, 700, 400, 0x000000, 0.9);
+    bg.setStrokeStyle(3, COLORS.crew);
+    
+    // Title
+    const title = this.add.text(0, -150, 'HOW TO PLAY', {
+      fontSize: '32px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
+    
+    // Instructions
+    const instructions = [
+      { icon: '📋', text: 'Click a crew member to select them' },
+      { icon: '🚚', text: 'Drag crew to stations to assign them' },
+      { icon: '💪', text: 'Cannons need crew to fire (0/4, 0/5, etc.)' },
+      { icon: '🔫', text: 'Keep powder flowing from Powder Room' },
+      { icon: '🏥', text: 'Crew in Surgery heal injured crew' },
+      { icon: '🚒', text: 'Fight fires and flooding crises' },
+      { icon: '☠️', text: "Don't let the ship sink!" },
+      { icon: '⚔️', text: 'Sink the enemy before they sink you!' }
+    ];
+    
+    instructions.forEach((inst, i) => {
+      const row = this.add.container(0, -100 + i * 45);
+      
+      const icon = this.add.text(-280, 0, inst.icon, {
+        fontSize: '24px'
+      });
+      const text = this.add.text(-240, 0, inst.text, {
+        fontSize: '16px',
+        color: '#ffffff'
+      });
+      row.add([icon, text]);
+      overlay.add(row);
+    });
+    
+    // Close instruction
+    const closeText = this.add.text(0, 120, '[ PRESS H to hide ]', {
+      fontSize: '14px',
+      color: '#888888',
+      fontStyle: 'italic'
+    }).setOrigin(0.5);
+    
+    overlay.add(bg);
+    overlay.add(title);
+    overlay.add(closeText);
+    
+    // Store reference
+    this.helpOverlay = overlay;
+    
+    // Add press H event
+    this.input.keyboard?.on('keydown-H', () => {
+      this.toggleHelp();
+    });
+  }
+  
+  private toggleHelp(): void {
+    if (this.helpOverlay) {
+      const isVisible = this.helpOverlay.visible;
+      this.helpOverlay.setVisible(!isVisible);
     }
   }
   
